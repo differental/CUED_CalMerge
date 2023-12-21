@@ -8,10 +8,59 @@ import requests
 import pytz
 import recurring_ical_events
 
+def handle_events(list_of_events, lec_clean: bool, lab_clean: bool, opt_mode: int):
+    """
+    Handling of events
+    """
+    cal = Calendar()
+    cal.add('version', '2.0')
+    cal.add('prodid', '-//teaching.eng.cam.ac.uk//CUED Calendars//')
+    for event in list_of_events:
+        if ("see rota" in event["SUMMARY"] or "see lab rota" in event["SUMMARY"]):
+            continue
+        name = event["SUMMARY"].replace("\n", "")
+        timestart = event["DTSTART"].dt
+        timeend = event["DTEND"].dt
+        try:
+            location = event["LOCATION"].replace("\n", "")
+        except KeyError:
+            location = ""
+
+        if lec_clean and name.find('[') + 1:
+            if name.find('(Lecture Theatre 1)')+1:
+                location = "LT1"
+            elif name.find('(Constance Tipper)')+1:
+                location = "LT0"
+            name = name[0:name.find('[')]
+
+        if lab_clean and location.find(' - ') + 1:
+            location = location[0:location.find(' - ')]
+
+        if (("Industrial Placement" or "1PX") in name) and opt_mode <= 2:
+            continue
+        if name[0] == ("1" or "2") and name[1] == ("P" or "C") and opt_mode <= 1:
+            continue
+
+        newevent = Event()
+        newevent.add('summary', name)
+        newevent.add('dtstart', timestart)
+        newevent.add('dtend', timeend)
+        if location:
+            newevent['location'] = location
+        cal.add_component(newevent)
+    return cal
+
 now = datetime.now(pytz.timezone("Europe/London"))
 recommend_year = now.year
 if now.month <= 6:
     recommend_year -= 1
+
+print("""This tool helps you deal with CUED Calendars.
+Please refer to README.md for configuration guides.
+Use lecture.ics for lecture, lab.ics for lab, and combined.ics for both.
+Open the calendar file to import to your calendar.
+""")
+
 YR = int(
     input("Academic Year [" + str(recommend_year) + "]: ").strip() or recommend_year)
 
@@ -61,49 +110,20 @@ if LAB_GROUP:
 with open('lecture.ics', 'rb') as lecturee:
     lecture_cal = Calendar.from_ical(lecturee.read())
 
-cal = Calendar()
-cal.add('version', '2.0')
-cal.add('prodid', '-//teaching.eng.cam.ac.uk//CUED Calendars//')
-
-allevents = recurring_ical_events.of(
+lecture_events = recurring_ical_events.of(
     lecture_cal).between("19700101", "20991231")
+lecture_new = handle_events(lecture_events, LECTURE_CLEAN, LAB_CLEAN, operating_mode)
+with open('lecture.ics', 'wb') as f:
+    f.write(lecture_new.to_ical())
+
 if LAB_GROUP:
-    allevents += recurring_ical_events.of(
+    lab_events = recurring_ical_events.of(
         lab_cal).between("19700101", "20991231")
+    combined_events = lecture_events + lab_events
+    lab_new = handle_events(lab_events, LECTURE_CLEAN, LAB_CLEAN, operating_mode)
+    combined_new = handle_events(combined_events, LECTURE_CLEAN, LAB_CLEAN, operating_mode)
+    with open('lab.ics', 'wb') as f:
+        f.write(lab_new.to_ical())
+    with open('combined.ics', 'wb') as f:
+        f.write(combined_new.to_ical())
 
-for event in allevents:
-    if ("see rota" in event["SUMMARY"] or "see lab rota" in event["SUMMARY"]):
-        continue
-    name = event["SUMMARY"].replace("\n", "")
-    timestart = event["DTSTART"].dt
-    timeend = event["DTEND"].dt
-    try:
-        location = event["LOCATION"].replace("\n", "")
-    except KeyError:
-        location = ""
-
-    if LECTURE_CLEAN and name.find('[') + 1:
-        if name.find('(Lecture Theatre 1)')+1:
-            location = "LT1"
-        elif name.find('(Constance Tipper)')+1:
-            location = "LT0"
-        name = name[0:name.find('[')]
-
-    if LAB_CLEAN and location.find(' - ') + 1:
-        location = location[0:location.find(' - ')]
-
-    if (("Industrial Placement" or "1PX") in name) and operating_mode <= 2:
-        continue
-    if name[0] == ("1" or "2") and name[1] == ("P" or "C") and operating_mode <= 1:
-        continue
-
-    newevent = Event()
-    newevent.add('summary', name)
-    newevent.add('dtstart', timestart)
-    newevent.add('dtend', timeend)
-    if location:
-        newevent['location'] = location
-    cal.add_component(newevent)
-
-with open('combined.ics', 'wb') as f:
-    f.write(cal.to_ical())

@@ -7,10 +7,21 @@ A small Python script that helps CUED students (IA/IB) download and combine lab 
 Clone the repo / download zip & unzip
 
 ```bash
+git clone https://github.com/differental/CUED_CalMerge.git
 cd CUED_CalMerge
 pip install -r requirements.txt
 python main.py
 ```
+
+## Expected output
+
+`lecture.ics`: Optimised and filtered lecture calendar file;
+
+if Lab Group Number is not set to 0 (skip):
+    `lab.ics`: Optimised and filtered lab calendar file;
+    `combined.ics`: Combination of lecture and lab calendars, optimised and filtered.
+
+To import the generated `ics` files to your own calendar, simply open them, or go to Google Calendar / Outlook Calendar / iCloud and import them.
 
 ## Configuration
 
