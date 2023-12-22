@@ -129,7 +129,7 @@ Choose Mode [1]: """).strip() or 1) - 1)) if not SKIP_LECTURE else False
 Choose Mode [1]: """).strip() or 1) - 1)) if not SKIP_LAB else False
     
     operating_mode = int(input(
-    "\n1. Bare Minimum\n2. Essential\n3. All\nChoose Mode [2]: ").strip() or 2)
+    "\n1. Bare Minimum\n2. Essential\n3. All\nChoose Mode [2]: ").strip() or 2) if not SKIP_LECTURE else 3
 
 LAB_URL = '/'.join((
     "http://teach-cals.eng.cam.ac.uk/cued-labs",
