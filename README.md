@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ## Running the script
 
 ```
-usage: main.py [-h] [-l] [-b] [-c CONFIG]
+usage: python main.py [-h] [-l] [-b] [-c CONFIG]
 
 This tool helps you deal with CUED Calendars. Please refer to README.md for
 configuration guides.
