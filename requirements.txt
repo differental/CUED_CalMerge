@@ -1,4 +1,4 @@
 icalendar==6.3.1
 pytz==2025.2
 recurring_ical_events==3.8.0
-Requests==2.32.4
+Requests==2.33.0
